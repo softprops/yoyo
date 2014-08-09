@@ -12,6 +12,8 @@ case class Yo(
     req <<? Map("api_token" -> token) OK as.String
   )
   def all = request(base.POST / "yoall")
-  def yo(username: String) = request(base.POST / "yo")
+  def yo(username: String) = request(
+    base.POST / "yo" <<? Map("username" -> username)
+  )
   def subscribers = request(base / "subscribers_count")
 }
