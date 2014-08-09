@@ -4,6 +4,7 @@ import scala.concurrent.ExecutionContext
 import dispatch._
 import dispatch.{ as, Http, Req, :/ }
 
+/** justyo - http://dev.justyo.co/yo/documents.html */
 case class Yo(
   token: String, http: Http = new Http)
  (implicit ec: ExecutionContext) {
