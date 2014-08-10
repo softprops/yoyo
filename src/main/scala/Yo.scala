@@ -10,13 +10,19 @@ case class Yo(
   token: String, http: Http = new Http)
  (implicit ec: ExecutionContext) {
   private[this] val credentials = Map("api_token" -> token)
+
   private[this] def base = :/("api.justyo.co")
+
   private[this] def sign(req: Req): Req =
-    if ("GET" == req.toRequest.getMethod) req <<? credentials
+    if ("GET" == req.toRequest.getMethod)
+      req <<? credentials
     else req << credentials
-  private[this] def request[T](req: Req)(transform: Response => T) = http(
-    sign(req / "") OK transform
-  )
+
+  private[this] def request[T]
+   (req: Req)
+   (transform: Response => T) = http(
+     sign(req / "") OK transform
+   )
 
   def all = request(base.POST / "yoall") (as.json4s.Json andThen {
     _ => true
