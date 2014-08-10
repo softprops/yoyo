@@ -14,4 +14,4 @@ scalacOptions in ThisBuild ++= Seq(Opts.compile.deprecation) ++
 
 initialCommands := "import scala.concurrent.ExecutionContext.Implicits.global;"
 
-libraryDependencies += "net.databinder.dispatch" %% "dispatch-core" % "0.11.1"
+libraryDependencies += "net.databinder.dispatch" %% "dispatch-json4s-native" % "0.11.1"
