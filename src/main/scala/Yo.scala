@@ -1,32 +1,36 @@
 package yoyo
 
 import com.ning.http.client.{ AsyncHandler, Response }
-import dispatch.{ as, FunctionHandler, Http, Req, :/ }
-import org.json4s._
+import dispatch.{ FunctionHandler, Http, Req, :/ }
 import scala.concurrent.{ ExecutionContext, Future }
-
-trait Rep[T] {
-  def map(value: Response): T
-}
-
-object Rep {
-  implicit val identity: Rep[Response] =
-    new Rep[Response] {
-      def map(value: Response) = value
-    }
-}
+import scala.util.control.NoStackTrace
+import java.util.concurrent.{ ExecutionException }
 
 object Yo {
   type Handler[T] = AsyncHandler[T]
 
-  abstract class Completion[T: Rep] {
+  case class Error(code: Int, message: String)
+    extends RuntimeException(message) with NoStackTrace
+
+  abstract class Completion[T: Rep]
+    (implicit ec: ExecutionContext) {
     def apply[TT]
       (handler: Handler[TT]): Future[TT]
     def apply(): Future[T] =
       apply(implicitly[Rep[T]].map(_))
     def apply[TT]
       (f: Response => TT): Future[TT] =
-        apply(new FunctionHandler(f))
+        apply(new FunctionHandler(f) {
+          override def onCompleted(response: Response) = {
+            if (response.getStatusCode / 100 == 2) f(response)
+            else throw Error(
+              response.getStatusCode,
+              if (response.hasResponseBody) response.getResponseBody else "")
+          }
+        }).recoverWith {
+          case ee: ExecutionException =>
+            Future.failed(ee.getCause)
+        }
   }
 }
 
@@ -40,14 +44,14 @@ case class Yo(
 
   private[this] def base = :/("api.justyo.co")
 
-  def complete[A: Rep]
+  private def complete[A: Rep]
    (req: Req): Yo.Completion[A] =
     new Yo.Completion[A] {
       def apply[T](hand: Yo.Handler[T]) =
         request(req)(hand)
     }
 
-  def sign(req: Req): Req =
+  private def sign(req: Req): Req =
     if ("GET" == req.toRequest.getMethod)
       req <<? credentials
     else req << credentials
@@ -58,26 +62,29 @@ case class Yo(
      http(sign(req / "") > hand)
 
   object yo {
-    case class User(
-      name: String,
-      _link: Option[String]           = None,
-      _location: Option[(Long, Long)] = None)
-      extends Yo.Completion[Response] {
-      def link(l: String) = copy(_link = Some(l))
-      def location(lat: Long, lon: Long) = copy(_location = Some((lat, lon)))
+    case class Envelope(
+      username: Option[String]            = None,
+      _link: Option[String]               = None,
+      _location: Option[(Double, Double)] = None)
+      extends Yo.Completion[Delivery] {
+      def link(l: String) =
+        copy(_link = Some(l))
+      def location(lat: Double, lon: Double) =
+        copy(_location = Some((lat, lon)))
       def apply[T](hand: Yo.Handler[T]): Future[T] =
-        request(base.POST / "yo" << Map("username" -> name))(hand)
+        request(
+          base.POST /
+          username.map(_ => "yo").getOrElse("yoall")
+          << username.map(("username" -> _))
+            ++ _link.map(("link" -> _))
+            ++ _location.map {
+              case (lat, lon) => ("location" -> s"$lat,$lon")
+            })(hand)
     }
 
-    case class All(link: Option[String] = None)
-      extends Yo.Completion[Response] {
-      def apply[T](hand: Yo.Handler[T]): Future[T] =
-        request(base.POST / "yoall")(hand)
-    }
+    def user(name: String) = Envelope(Some(name))
 
-    def user(name: String) = User(name)
-
-    def all = All()
+    def all = Envelope()
   }
 
   object subscriber {
@@ -94,21 +101,22 @@ case class Yo(
       needsLocation: Option[Boolean] = None)
     extends Yo.Completion[Response] {
       def apply[T](hand: Yo.Handler[T]): Future[T] =
-        request(base.POST / "accounts"
-                << Map(
-                  "new_account_username" -> name,
-                  "new_account_passcode" -> passcode)
-                  ++ callback.map(("callback_url" -> _))
-                  ++ email.map(("email" -> _))
-                  ++ description.map(("description" -> _))
-                  ++ needsLocation.map(("needs_location" -> _.toString)))(hand)
+        request(
+          base.POST / "accounts"
+          << Map(
+            "new_account_username" -> name,
+            "new_account_passcode" -> passcode)
+            ++ callback.map(("callback_url" -> _))
+            ++ email.map(("email" -> _))
+            ++ description.map(("description" -> _))
+            ++ needsLocation.map(("needs_location" -> _.toString)))(hand)
     }
 
     def create(name: String, password: String) =
       Create(name, password)
 
     def exists(name: String) =
-      complete[Response](
+      complete[Exists](
         base / "check_username"
         <<? Map("username" -> name))      
   }
