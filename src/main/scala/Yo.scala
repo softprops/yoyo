@@ -100,7 +100,7 @@ case class Yo(
 
   object subscriber {
     def count =
-      complete[Response](base / "subscribers_count")
+      complete[Count](base / "subscribers_count")
   }
 
   object account {

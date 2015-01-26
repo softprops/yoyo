@@ -6,6 +6,8 @@ import org.json4s._
 
 case class Delivery(success: Boolean, id: String)
 
+case class Count(subscribers: Long)
+
 sealed trait Exists
 object Exists {
   case object Yep extends Exists 
@@ -44,6 +46,14 @@ object Rep {
         ("success", JBool(suc)) <- success
         ("yo_id", JString(id))  <- success
       } yield Delivery(suc, id)).head
+    }
+
+  implicit val count: Rep[Count] =
+    new Rep[Count] {
+      def map(value: Response) = (for {
+        JObject(c) <- as.json4s.Json(value)
+        ("count", JInt(count)) <- c
+      } yield Count(count.toLong)).head
     }
 
   implicit val exists: Rep[Exists] = 
