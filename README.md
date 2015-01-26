@@ -1,6 +1,6 @@
 # yoyo
 
-> [yo](http://www.justyo.co/)
+> just [yo](http://www.justyo.co/).
 
 ## usage
 
