@@ -1,0 +1,6 @@
+## initial release
+
+This is the initial release of an async interface for [yo](http://www.justyo.co/).
+
+You can [yo](https://github.com/softprops/yoyo#yoing) a friend or all your buddies, [count](https://github.com/softprops/yoyo#subscribers) your subscribers,
+ and [make accounts](https://github.com/softprops/yoyo#accounts)
