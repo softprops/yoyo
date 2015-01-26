@@ -32,7 +32,7 @@ val delivery: Future[Delivery] = cli.yo.user("foo")()
 Alternatively you can "yo" at all of the users subscribed to the user owning a given api key
 
 ```scala
-val deliever: Future[Delivery] = cli.yo.all()
+val delivery: Future[Delivery] = cli.yo.all()
 ```
 
 If you wish to delivery more than just a "yo" you can send a link or a location in lat, lon format.
