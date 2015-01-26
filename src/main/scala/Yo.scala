@@ -4,7 +4,7 @@ import com.ning.http.client.{ AsyncHandler, Response }
 import dispatch.{ FunctionHandler, Http, Req, :/ }
 import scala.concurrent.{ ExecutionContext, Future }
 import scala.util.control.NoStackTrace
-import java.util.concurrent.{ ExecutionException }
+import java.util.concurrent.ExecutionException
 
 object Yo {
   type Handler[T] = AsyncHandler[T]
@@ -14,10 +14,13 @@ object Yo {
 
   abstract class Completion[T: Rep]
     (implicit ec: ExecutionContext) {
+
     def apply[TT]
       (handler: Handler[TT]): Future[TT]
+
     def apply(): Future[T] =
       apply(implicitly[Rep[T]].map(_))
+
     def apply[TT]
       (f: Response => TT): Future[TT] =
         apply(new FunctionHandler(f) {
@@ -42,6 +45,9 @@ case class Yo(
   private[this] val credentials =
     Map("api_token" -> token)
 
+  private[this] val agent =
+    Map("User-Agent" -> s"yoyo/${BuildInfo.version}")
+
   private[this] def base = :/("api.justyo.co")
 
   private def complete[A: Rep]
@@ -59,18 +65,23 @@ case class Yo(
   def request[T]
    (req: Req)
    (hand: Yo.Handler[T]) =
-     http(sign(req / "") > hand)
+     http(sign(req / "")
+          <:< agent
+          > hand)
 
   object yo {
     case class Envelope(
-      username: Option[String]            = None,
-      _link: Option[String]               = None,
-      _location: Option[(Double, Double)] = None)
+      username: Option[String]                        = None,
+      private val _link: Option[String]               = None,
+      private val _location: Option[(Double, Double)] = None)
       extends Yo.Completion[Delivery] {
+
       def link(l: String) =
         copy(_link = Some(l))
+
       def location(lat: Double, lon: Double) =
         copy(_location = Some((lat, lon)))
+
       def apply[T](hand: Yo.Handler[T]): Future[T] =
         request(
           base.POST /
@@ -95,21 +106,34 @@ case class Yo(
   object account {
     case class Create(
       name: String, passcode: String,
-      callback: Option[String]       = None,
-      email: Option[String]          = None,
-      description: Option[String]    = None,
-      needsLocation: Option[Boolean] = None)
+      private val _callback: Option[String]       = None,
+      private val _email: Option[String]          = None,
+      private val _description: Option[String]    = None,
+      private val _needsLocation: Option[Boolean] = None)
     extends Yo.Completion[Response] {
+
+      def callback(cb: String) =
+        copy(_callback = Some(cb))
+
+      def email(addr: String) =
+        copy(_email = Some(addr))
+
+      def description(desc: String) =
+        copy(_description = Some(desc))
+
+      def needsLocation(needs: Boolean) =
+        copy(_needsLocation = Some(needs))
+
       def apply[T](hand: Yo.Handler[T]): Future[T] =
         request(
           base.POST / "accounts"
           << Map(
-            "new_account_username" -> name,
+            "new_account_username" -> name.toUpperCase,
             "new_account_passcode" -> passcode)
-            ++ callback.map(("callback_url" -> _))
-            ++ email.map(("email" -> _))
-            ++ description.map(("description" -> _))
-            ++ needsLocation.map(("needs_location" -> _.toString)))(hand)
+            ++ _callback.map(("callback_url" -> _))
+            ++ _email.map(("email" -> _))
+            ++ _description.map(("description" -> _))
+            ++ _needsLocation.map(("needs_location" -> _.toString)))(hand)
     }
 
     def create(name: String, password: String) =

@@ -18,6 +18,14 @@ initialCommands := "import scala.concurrent.ExecutionContext.Implicits.global;"
 
 libraryDependencies += "net.databinder.dispatch" %% "dispatch-json4s-native" % "0.11.1"
 
+buildInfoSettings
+
+sourceGenerators in Compile <+= buildInfo
+
+buildInfoKeys := Seq[BuildInfoKey](version)
+
+buildInfoPackage := "yoyo"
+
 pomExtra  := (
   <scm>
     <url>git@github.com:softprops/{name.value}.git</url>
