@@ -19,7 +19,7 @@ val cli = yoyo.Yo(token)
 
 ### yo(ing)
 
-The core use of you is to send a "yo" to a user or to all yo users subscribed to your account
+The core use of yo is to send a "yo" to a user or to all yo users subscribed to your account
 
 Given a name like "foo", you can yo them with
 
