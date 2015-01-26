@@ -77,10 +77,10 @@ case class Yo(
       extends Yo.Completion[Delivery] {
 
       def link(l: String) =
-        copy(_link = Some(l))
+        copy(_link = Some(l), _location = None)
 
       def location(lat: Double, lon: Double) =
-        copy(_location = Some((lat, lon)))
+        copy(_location = Some((lat, lon)), _link = None)
 
       def apply[T](hand: Yo.Handler[T]): Future[T] =
         request(
