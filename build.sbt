@@ -2,7 +2,9 @@ organization := "me.lessis"
 
 name := "yoyo"
 
-version := "0.1.0-SNAPSHOT"
+version := "0.1.0"
+
+description := "An async interface for yo"
 
 crossScalaVersions ++= Seq("2.10.4", "2.11.5")
 
