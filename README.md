@@ -2,6 +2,22 @@
 
 > just [yo](http://www.justyo.co/).
 
+## install
+
+via sbt
+
+make sure you have the following in our resolver chain
+
+```scala
+resolvers += "softprops-maven" at "http://dl.bintray.com/content/softprops/maven"
+```
+
+Add the following to your library dependencies
+
+```scala
+libraryDependencies += "me.lessis" %% "yoyo % "0.1.0"
+```
+
 ## usage
 
 The entrypoint for yoyo is a class called... `Yo`. In order to interact with yo you need to 
