@@ -10,6 +10,10 @@ crossScalaVersions ++= Seq("2.10.4", "2.11.5")
 
 scalaVersion := crossScalaVersions.value.last
 
+licenses := Seq(
+  "MIT" ->
+  url(s"https://github.com/softprops/${name.value}/blob/${version.value}/LICENSE"))
+
 homepage := Some(url(s"http://github.com/softprops/${name.value}#readme"))
 
 scalacOptions in ThisBuild ++= Seq(Opts.compile.deprecation) ++
